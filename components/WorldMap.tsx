@@ -112,7 +112,7 @@ export default function WorldMap({ relations, countries, onCountrySelect }: Worl
         } else if (countryId && relationMap[countryId]) {
           el.attr('fill', STATUS_COLORS[relationMap[countryId]]).attr('opacity', 1).attr('filter', 'url(#glow)');
         } else {
-          el.attr('fill', '#1e293b').attr('opacity', 0.5).attr('filter', 'none');
+          el.attr('fill', 'url(#landGrad)').attr('opacity', 0.4).attr('filter', 'none');
         }
       });
   };
@@ -223,4 +223,5 @@ export default function WorldMap({ relations, countries, onCountrySelect }: Worl
     </div>
   );
 }
+
 
