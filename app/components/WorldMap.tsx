@@ -156,3 +156,4 @@ export default function WorldMap({ relations, countries, onCountrySelect }: Worl
     </div>
   );
 }
+ 
