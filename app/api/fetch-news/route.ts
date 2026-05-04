@@ -7,61 +7,66 @@ const supabase = createClient(
 );
 
 const COUNTRY_KEYWORDS: Record<string, string[]> = {
-  US: ['United States', 'America', 'Trump', 'Washington', 'Biden'],
-  CN: ['China', 'Chinese', 'Beijing', 'Xi Jinping'],
-  RU: ['Russia', 'Putin', 'Moscow', 'Kremlin'],
-  UA: ['Ukraine', 'Kyiv', 'Zelensky'],
-  JP: ['Japan', 'Tokyo', 'Kishida', 'Ishiba'],
-  KP: ['North Korea', 'Kim Jong'],
-  IL: ['Israel', 'Netanyahu', 'Gaza'],
-  PS: ['Palestine', 'Gaza', 'Hamas'],
-  TW: ['Taiwan', 'Taipei'],
-  KR: ['South Korea', 'Seoul'],
-  IN: ['India', 'Modi', 'New Delhi'],
-  IR: ['Iran', 'Tehran'],
-  SA: ['Saudi Arabia', 'Riyadh'],
-  DE: ['Germany', 'Berlin'],
-  FR: ['France', 'Paris', 'Macron'],
-  GB: ['Britain', 'UK', 'London', 'Starmer'],
+  US: ['アメリカ', '米国', 'トランプ'],
+  CN: ['中国', '習近平'],
+  RU: ['ロシア', 'プーチン'],
+  UA: ['ウクライナ'],
+  JP: ['日本', '石破'],
+  KP: ['北朝鮮'],
+  IL: ['イスラエル'],
+  PS: ['パレスチナ', 'ガザ'],
+  TW: ['台湾'],
+  KR: ['韓国'],
+  IN: ['インド'],
+  IR: ['イラン'],
+  SA: ['サウジ'],
+  DE: ['ドイツ'],
+  FR: ['フランス'],
+  GB: ['イギリス'],
 };
+
+const RSS_FEEDS = [
+  'https://www3.nhk.or.jp/rss/news/cat6.xml',
+  'https://www3.nhk.or.jp/rss/news/cat0.xml',
+];
 
 export async function GET() {
   try {
-    const apiKey = process.env.NEWSAPI_KEY;
-    const url = `https://newsapi.org/v2/everything?q=diplomacy OR geopolitics OR "international relations" OR war OR sanctions&language=en&sortBy=publishedAt&pageSize=20&apiKey=${apiKey}`;
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (data.status !== 'ok' || !data.articles) {
-      return NextResponse.json({ error: data.message || 'No articles' }, { status: 400 });
-    }
-
     let inserted = 0;
-    for (const article of data.articles) {
-      if (!article.title || article.title === '[Removed]') continue;
 
-      const text = `${article.title} ${article.description || ''}`;
-      const relatedCountries: string[] = [];
+    for (const feedUrl of RSS_FEEDS) {
+      const res = await fetch(feedUrl);
+      const xml = await res.text();
+      const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
 
-      for (const [countryId, keywords] of Object.entries(COUNTRY_KEYWORDS)) {
-        if (keywords.some(kw => text.includes(kw))) {
-          relatedCountries.push(countryId);
+      for (const item of items) {
+        const title = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1] || item.match(/<title>(.*?)<\/title>/)?.[1] || '';
+        const link = item.match(/<link>(.*?)<\/link>/)?.[1] || item.match(/<guid>(.*?)<\/guid>/)?.[1] || '';
+        const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || new Date().toISOString();
+        const desc = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/)?.[1] || '';
+
+        if (!title || !link) continue;
+
+        const relatedCountries: string[] = [];
+        for (const [id, kws] of Object.entries(COUNTRY_KEYWORDS)) {
+          if (kws.some(kw => title.includes(kw) || desc.includes(kw))) {
+            relatedCountries.push(id);
+          }
         }
+
+        const { error } = await supabase.from('articles').insert({
+          title_ja: title,
+          body_ja: desc,
+          source_name: 'NHK',
+          source_url: link,
+          source_country: 'JP',
+          published_at: new Date(pubDate).toISOString(),
+          is_published: true,
+          related_countries: relatedCountries,
+        });
+
+        if (!error) inserted++;
       }
-
-      const { error } = await supabase.from('articles').insert({
-        title_ja: article.title,
-        body_ja: article.description || '',
-        source_name: article.source?.name || '不明',
-        source_url: article.url,
-        source_country: 'US',
-        published_at: article.publishedAt,
-        is_published: true,
-        related_countries: relatedCountries,
-      });
-
-      if (!error) inserted++;
     }
 
     return NextResponse.json({ success: true, inserted });
