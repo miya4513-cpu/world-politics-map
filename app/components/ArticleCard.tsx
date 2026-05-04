@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 
 interface Article {
   id: string;
@@ -29,36 +28,39 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, countries }) => {
   );
 
   const formattedDate = new Date(article.published_at).toLocaleDateString('ja-JP', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: 'numeric', month: 'short', day: 'numeric',
   });
 
   return (
-    <Link href={`/articles/${article.id}`}>
-      <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
+    <a href={article.source_url} target="_blank" rel="noopener noreferrer">
+      <div className="bg-gray-900 border border-slate-800 rounded-xl p-4 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer h-full flex flex-col">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          <span className="text-xs text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">
             {article.source_name}
           </span>
-          <span className="text-xs text-gray-400">{formattedDate}</span>
+          <span className="text-xs text-slate-500">{formattedDate}</span>
         </div>
 
-        <h3 className="text-sm font-semibold text-gray-900 mb-3 flex-1 line-clamp-3">
+        <h3 className="text-sm font-semibold text-white mb-3 flex-1 line-clamp-3 leading-relaxed">
           {article.title_ja}
         </h3>
 
         {relatedCountries.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-auto">
             {relatedCountries.slice(0, 3).map(country => (
-              <span key={country.id} className="text-xs text-gray-600">
+              <span key={country.id} className="text-xs text-slate-400">
                 {country.flag_emoji} {country.name_ja}
               </span>
             ))}
           </div>
         )}
+
+        <div className="mt-2 text-xs text-slate-600 flex items-center gap-1">
+          <span>外部サイトへ</span>
+          <span>↗</span>
+        </div>
       </div>
-    </Link>
+    </a>
   );
 };
 
