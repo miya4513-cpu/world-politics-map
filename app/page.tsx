@@ -1,8 +1,8 @@
 ﻿'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { getCountries, getCountryRelations, getPublishedArticles } from '@/lib/supabase';
+import { getCountries, getPublishedArticles } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 import ArticleCard from '@/components/ArticleCard';
 import Header from '@/components/Header';
@@ -60,6 +60,7 @@ export default function HomePage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [epochs, setEpochs] = useState<Epoch[]>([]);
   const [selectedEpoch, setSelectedEpoch] = useState<string>('current');
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -118,50 +119,84 @@ export default function HomePage() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            世界政治情勢マップ
-          </h1>
+          <h1 className="text-4xl font-bold text-white mb-4">世界政治情勢マップ</h1>
           <p className="text-gray-400 text-lg max-w-3xl mx-auto">
-            複雑な国際関係をシンプルに可視化。
-            国をクリックすると同盟・敵対関係が一目でわかります。
+            複雑な国際関係をシンプルに可視化。国をクリックすると同盟・敵対関係が一目でわかります。
           </p>
         </section>
 
         {/* タイムライン */}
-        <section className="mb-4">
-          <div className="bg-gray-900 rounded-xl p-4 border border-slate-800">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-slate-400 text-xs">📅 時代を選択：</span>
-              {currentEpoch && (
-                <span className="text-blue-400 text-xs font-medium">
-                  {currentEpoch.year}年 — {currentEpoch.title_ja}
-                </span>
-              )}
+        <section className="mb-6">
+          <div className="bg-gray-900 rounded-2xl border border-slate-800 overflow-hidden">
+            
+            {/* 選択中エポックの情報 */}
+            <div className="px-6 py-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                {currentEpoch ? (
+                  <>
+                    <span className="text-blue-400 font-bold text-lg">
+                      {currentEpoch.id === 'current' ? '現在' : `${currentEpoch.year}年`}
+                    </span>
+                    <span className="text-white font-semibold">{currentEpoch.title_ja}</span>
+                    <span className="text-slate-400 text-sm">— {currentEpoch.description_ja}</span>
+                  </>
+                ) : (
+                  <span className="text-slate-400">時代を選択してください</span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {epochs.map(epoch => (
-                <button
-                  key={epoch.id}
-                  onClick={() => handleEpochChange(epoch.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    selectedEpoch === epoch.id
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
-                  }`}
-                >
-                  {epoch.id === 'current' ? '🌐 現在' : `${epoch.year} ${epoch.title_ja}`}
-                </button>
-              ))}
+
+            {/* タイムラインバー */}
+            <div className="px-6 py-5" ref={timelineRef}>
+              <div className="relative">
+                {/* 横線 */}
+                <div className="absolute top-4 left-0 right-0 h-0.5 bg-slate-700"></div>
+                
+                {/* エポックボタン */}
+                <div className="relative flex justify-between items-start overflow-x-auto pb-2">
+                  {epochs.map((epoch, index) => {
+                    const isSelected = selectedEpoch === epoch.id;
+                    const isCurrent = epoch.id === 'current';
+                    return (
+                      <button
+                        key={epoch.id}
+                        onClick={() => handleEpochChange(epoch.id)}
+                        className="flex flex-col items-center group flex-shrink-0 px-2"
+                        style={{ minWidth: `${100 / epochs.length}%` }}
+                      >
+                        {/* ドット */}
+                        <div className={`w-4 h-4 rounded-full border-2 transition-all duration-200 mb-2 z-10 ${
+                          isSelected
+                            ? 'bg-blue-500 border-blue-400 shadow-lg shadow-blue-500/50 scale-125'
+                            : 'bg-slate-800 border-slate-600 group-hover:border-blue-500 group-hover:bg-slate-700'
+                        }`}></div>
+                        
+                        {/* 年 */}
+                        <span className={`text-xs font-bold mb-1 transition-colors ${
+                          isSelected ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'
+                        }`}>
+                          {isCurrent ? '現在' : epoch.year}
+                        </span>
+                        
+                        {/* タイトル */}
+                        <span className={`text-xs text-center leading-tight transition-colors max-w-16 ${
+                          isSelected ? 'text-white' : 'text-slate-600 group-hover:text-slate-400'
+                        }`}>
+                          {isCurrent ? '🌐' : epoch.title_ja.length > 8 ? epoch.title_ja.slice(0, 8) + '…' : epoch.title_ja}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            {currentEpoch && currentEpoch.description_ja && (
-              <p className="text-slate-500 text-xs mt-2">{currentEpoch.description_ja}</p>
-            )}
           </div>
         </section>
 
         {/* 世界地図 */}
         <section className="mb-8">
-          <div className="bg-gray-900 rounded-xl border border-slate-800 p-4">
+          <div className="bg-gray-900 rounded-2xl border border-slate-800 p-4">
             <div className="h-[500px]">
               <WorldMap 
                 relations={relations}
@@ -171,7 +206,7 @@ export default function HomePage() {
             </div>
             
             {selectedCountry && (
-              <div className="mt-4 p-4 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="mt-4 p-4 bg-slate-800 rounded-xl border border-slate-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">
@@ -181,16 +216,14 @@ export default function HomePage() {
                       <h3 className="font-semibold text-white">
                         {countries.find(c => c.id === selectedCountry)?.name_ja}
                       </h3>
-                      <p className="text-sm text-slate-400">
-                        クリックした国の関係が表示されています
-                      </p>
+                      <p className="text-sm text-slate-400">クリックした国の関係が表示されています</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedCountry(null)}
-                    className="text-slate-400 hover:text-white text-sm"
+                    className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700 transition-colors"
                   >
-                    選択を解除
+                    ✕ 解除
                   </button>
                 </div>
               </div>
@@ -202,17 +235,11 @@ export default function HomePage() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">最新の政治情勢ニュース</h2>
-            <a href="/articles" className="text-blue-400 hover:text-blue-300 font-medium">
-              すべて見る →
-            </a>
+            <a href="/articles" className="text-blue-400 hover:text-blue-300 font-medium">すべて見る →</a>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {articles.map((article) => (
-              <ArticleCard 
-                key={article.id} 
-                article={article} 
-                countries={countries} 
-              />
+              <ArticleCard key={article.id} article={article} countries={countries} />
             ))}
           </div>
         </section>
