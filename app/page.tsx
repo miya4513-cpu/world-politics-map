@@ -1,14 +1,15 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { getCountries, getCountryRelations, getPublishedArticles } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import ArticleCard from '@/components/ArticleCard';
 import Header from '@/components/Header';
 
 const WorldMap = dynamic(() => import('@/components/WorldMap'), {
   ssr: false,
-  loading: () => <div className="w-full h-[500px] bg-gray-200 animate-pulse rounded-lg"></div>
+  loading: () => <div className="w-full h-[500px] bg-gray-800 animate-pulse rounded-lg"></div>
 });
 
 interface Country {
@@ -30,6 +31,8 @@ interface CountryRelation {
   summary_ja: string;
   background_ja: string;
   last_updated: string;
+  conflict_types?: string[];
+  epoch_id?: string;
 }
 
 interface Article {
@@ -41,25 +44,41 @@ interface Article {
   related_countries: string[];
 }
 
+interface Epoch {
+  id: string;
+  year: number;
+  title_ja: string;
+  description_ja: string;
+  sort_order: number;
+}
+
 export default function HomePage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [relations, setRelations] = useState<CountryRelation[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [epochs, setEpochs] = useState<Epoch[]>([]);
+  const [selectedEpoch, setSelectedEpoch] = useState<string>('current');
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const [countriesData, relationsData, articlesData] = await Promise.all([
+        const [countriesData, articlesData] = await Promise.all([
           getCountries(),
-          getCountryRelations(),
           getPublishedArticles(5)
         ]);
         setCountries(countriesData);
-        setRelations(relationsData);
         setArticles(articlesData);
+
+        const { data: epochData } = await supabase
+          .from('epochs')
+          .select('*')
+          .order('sort_order');
+        if (epochData) setEpochs(epochData);
+
+        await loadRelations('current');
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -69,31 +88,80 @@ export default function HomePage() {
     loadData();
   }, []);
 
+  async function loadRelations(epochId: string) {
+    const { data } = await supabase
+      .from('country_relations')
+      .select('*')
+      .eq('epoch_id', epochId);
+    if (data) setRelations(data);
+  }
+
+  async function handleEpochChange(epochId: string) {
+    setSelectedEpoch(epochId);
+    setSelectedCountry(null);
+    await loadRelations(epochId);
+  }
+
+  const currentEpoch = epochs.find(e => e.id === selectedEpoch);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mt-20"></div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-950">
       <Header currentPage="home" />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <section className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <section className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-4">
             世界政治情勢マップ
           </h1>
-          <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+          <p className="text-gray-400 text-lg max-w-3xl mx-auto">
             複雑な国際関係をシンプルに可視化。
             国をクリックすると同盟・敵対関係が一目でわかります。
           </p>
         </section>
 
-        <section className="mb-12">
-          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+        {/* タイムライン */}
+        <section className="mb-4">
+          <div className="bg-gray-900 rounded-xl p-4 border border-slate-800">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-slate-400 text-xs">📅 時代を選択：</span>
+              {currentEpoch && (
+                <span className="text-blue-400 text-xs font-medium">
+                  {currentEpoch.year}年 — {currentEpoch.title_ja}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {epochs.map(epoch => (
+                <button
+                  key={epoch.id}
+                  onClick={() => handleEpochChange(epoch.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    selectedEpoch === epoch.id
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                  }`}
+                >
+                  {epoch.id === 'current' ? '🌐 現在' : `${epoch.year} ${epoch.title_ja}`}
+                </button>
+              ))}
+            </div>
+            {currentEpoch && currentEpoch.description_ja && (
+              <p className="text-slate-500 text-xs mt-2">{currentEpoch.description_ja}</p>
+            )}
+          </div>
+        </section>
+
+        {/* 世界地図 */}
+        <section className="mb-8">
+          <div className="bg-gray-900 rounded-xl border border-slate-800 p-4">
             <div className="h-[500px]">
               <WorldMap 
                 relations={relations}
@@ -103,24 +171,24 @@ export default function HomePage() {
             </div>
             
             {selectedCountry && (
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="mt-4 p-4 bg-slate-800 rounded-lg border border-slate-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">
                       {countries.find(c => c.id === selectedCountry)?.flag_emoji}
                     </span>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-white">
                         {countries.find(c => c.id === selectedCountry)?.name_ja}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-slate-400">
                         クリックした国の関係が表示されています
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedCountry(null)}
-                    className="text-gray-500 hover:text-gray-700 text-sm"
+                    className="text-slate-400 hover:text-white text-sm"
                   >
                     選択を解除
                   </button>
@@ -130,10 +198,11 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* 最新記事 */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">最新の政治情勢ニュース</h2>
-            <a href="/articles" className="text-blue-600 hover:text-blue-800 font-medium">
+            <h2 className="text-2xl font-bold text-white">最新の政治情勢ニュース</h2>
+            <a href="/articles" className="text-blue-400 hover:text-blue-300 font-medium">
               すべて見る →
             </a>
           </div>
@@ -149,9 +218,9 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="bg-white border-t border-gray-200 mt-12">
+      <footer className="bg-gray-900 border-t border-slate-800 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-600 text-sm">
+          <div className="text-center text-slate-500 text-sm">
             <p>世界政治情勢マップ © 2024</p>
             <p className="mt-2">データは随時更新されています</p>
           </div>
