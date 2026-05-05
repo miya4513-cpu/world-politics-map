@@ -136,7 +136,7 @@ export default function WorldMap({ relations, countries, onCountrySelect }: Worl
     feMerge.append('feMergeNode').attr('in', 'coloredBlur');
     feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
     svg.append('rect').attr('width', width).attr('height', height).attr('fill', 'url(#bgGrad)');
-    const projection = d3.geoNaturalEarth1().scale(width / 6.5).translate([width / 2, height / 2]);
+    const projection = d3.geoNaturalEarth1().scale(width / 6.5).translate([width / 2, height / 1.8]);
     const path = d3.geoPath().projection(projection);
     const g = svg.append('g');
     const zoom = d3.zoom<SVGSVGElement, unknown>().scaleExtent([1, 8]).on('zoom', (event) => { g.attr('transform', event.transform); });
