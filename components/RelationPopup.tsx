@@ -48,7 +48,10 @@ const RelationPopup: React.FC<RelationPopupProps> = ({
   return (
     <div
       className="absolute bg-gray-900 border border-slate-700 rounded-xl shadow-2xl p-4 max-w-sm z-50 overflow-y-auto max-h-96"
-      style={{ left: position.x + 20, top: position.y + 20 }}
+      style={{
+  left: Math.min(position.x + 20, window.innerWidth - 370),
+  top: Math.min(position.y + 20, window.innerHeight - 420),
+}}
     >
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold text-white text-sm">関係一覧</h3>
