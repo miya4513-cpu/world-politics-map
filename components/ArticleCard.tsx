@@ -5,6 +5,7 @@ import React from 'react';
 interface Article {
   id: string;
   title_ja: string;
+  body_ja: string;
   source_name: string;
   source_url: string;
   published_at: string;
@@ -41,12 +42,18 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, countries }) => {
           <span className="text-xs text-slate-500">{formattedDate}</span>
         </div>
 
-        <h3 className="text-sm font-semibold text-white mb-3 flex-1 line-clamp-3 leading-relaxed">
+        <h3 className="text-sm font-semibold text-white mb-2 line-clamp-2 leading-relaxed">
           {article.title_ja}
         </h3>
 
+        {article.body_ja && (
+          <p className="text-xs text-slate-400 leading-relaxed line-clamp-3 mb-3 flex-1">
+            {article.body_ja}
+          </p>
+        )}
+
         {relatedCountries.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-auto">
+          <div className="flex flex-wrap gap-1 mt-auto mb-2">
             {relatedCountries.slice(0, 3).map(country => (
               <span key={country.id} className="text-xs text-slate-400">
                 {country.flag_emoji} {country.name_ja}
@@ -55,7 +62,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, countries }) => {
           </div>
         )}
 
-        <div className="mt-2 text-xs text-slate-600 flex items-center gap-1">
+        <div className="text-xs text-slate-600 flex items-center gap-1">
           <span>外部サイトへ</span>
           <span>↗</span>
         </div>
