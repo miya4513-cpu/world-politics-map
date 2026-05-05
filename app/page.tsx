@@ -197,38 +197,66 @@ export default function HomePage() {
 
         {/* 世界地図 */}
         <section className="mb-8">
-          <div className="bg-gray-900 rounded-2xl border border-slate-800 p-4">
-            <div className="h-[500px]">
+          <div className="bg-gray-900 rounded-2xl border border-slate-800 p-4 flex gap-4">
+            {/* 地図 */}
+            <div className="flex-1 h-[500px]">
               <WorldMap 
                 relations={relations}
                 countries={countries}
                 onCountrySelect={setSelectedCountry}
               />
             </div>
-            
-            {selectedCountry && (
-              <div className="mt-4 p-4 bg-slate-800 rounded-xl border border-slate-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">
-                      {countries.find(c => c.id === selectedCountry)?.flag_emoji}
-                    </span>
-                    <div>
-                      <h3 className="font-semibold text-white">
-                        {countries.find(c => c.id === selectedCountry)?.name_ja}
-                      </h3>
-                      <p className="text-sm text-slate-400">クリックした国の関係が表示されています</p>
+
+            {/* サイドパネル */}
+            <div className="w-64 flex flex-col bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex-shrink-0">
+              <div className="p-3 border-b border-slate-700 flex items-center justify-between">
+                {selectedCountry ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{countries.find(c => c.id === selectedCountry)?.flag_emoji}</span>
+                      <span className="font-semibold text-white text-sm">{countries.find(c => c.id === selectedCountry)?.name_ja}</span>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedCountry(null)}
-                    className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700 transition-colors"
-                  >
-                    ✕ 解除
-                  </button>
-                </div>
+                    <button onClick={() => setSelectedCountry(null)} className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded hover:bg-slate-700">✕</button>
+                  </>
+                ) : (
+                  <span className="text-slate-400 text-sm">国をクリックしてください</span>
+                )}
               </div>
-            )}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {selectedCountry ? (
+                  relations
+                    .filter(r => r.country_a === selectedCountry || r.country_b === selectedCountry)
+                    .map(rel => {
+                      const otherId = rel.country_a === selectedCountry ? rel.country_b : rel.country_a;
+                      const other = countries.find(c => c.id === otherId);
+                      const statusColors: Record<string, string> = {
+                        hostile: 'text-red-400 bg-red-400/10',
+                        tension: 'text-orange-400 bg-orange-400/10',
+                        friendly: 'text-green-400 bg-green-400/10',
+                        alliance: 'text-blue-400 bg-blue-400/10',
+                      };
+                      const statusLabels: Record<string, string> = {
+                        hostile: '敵対', tension: '対立', friendly: '友好', alliance: '同盟'
+                      };
+                      if (!other) return null;
+                      return (
+                        <div key={rel.id} className="border-b border-slate-700 pb-3 last:border-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-base">{other.flag_emoji}</span>
+                            <span className="text-white text-xs font-medium">{other.name_ja}</span>
+                            <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${statusColors[rel.status]}`}>
+                              {statusLabels[rel.status]}
+                            </span>
+                          </div>
+                          <p className="text-slate-400 text-xs leading-relaxed">{rel.summary_ja}</p>
+                        </div>
+                      );
+                    })
+                ) : (
+                  <p className="text-slate-500 text-xs text-center mt-8">地図上の国をクリックすると<br/>関係一覧が表示されます</p>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
