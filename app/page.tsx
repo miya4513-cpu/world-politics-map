@@ -41,6 +41,7 @@ interface Article {
   source_name: string;
   source_url: string;
   published_at: string;
+  body_ja: string;
   related_countries: string[];
 }
 
