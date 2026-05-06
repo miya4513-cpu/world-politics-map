@@ -1,11 +1,16 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { getCountries, getPublishedArticles } from '@/lib/supabase';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import ArticleCard from '@/components/ArticleCard';
 import Header from '@/components/Header';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const WorldMap = dynamic(() => import('@/components/WorldMap'), {
   ssr: false,
@@ -41,7 +46,6 @@ interface Article {
   source_name: string;
   source_url: string;
   published_at: string;
-  body_ja: string;
   related_countries: string[];
 }
 
@@ -61,7 +65,6 @@ export default function HomePage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [epochs, setEpochs] = useState<Epoch[]>([]);
   const [selectedEpoch, setSelectedEpoch] = useState<string>('current');
-  const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -116,8 +119,12 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <Header currentPage="home" countries={countries} onCountrySelect={setSelectedCountry}
-      
+      <Header
+        currentPage="home"
+        countries={countries}
+        onCountrySelect={setSelectedCountry}
+      />
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">世界政治情勢マップ</h1>
@@ -126,11 +133,8 @@ export default function HomePage() {
           </p>
         </section>
 
-        {/* タイムライン */}
         <section className="mb-6">
           <div className="bg-gray-900 rounded-2xl border border-slate-800 overflow-hidden">
-            
-            {/* 選択中エポックの情報 */}
             <div className="px-6 py-4 border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
@@ -147,16 +151,11 @@ export default function HomePage() {
                 )}
               </div>
             </div>
-
-            {/* タイムラインバー */}
-            <div className="px-6 py-5" ref={timelineRef}>
+            <div className="px-6 py-5">
               <div className="relative">
-                {/* 横線 */}
                 <div className="absolute top-4 left-0 right-0 h-0.5 bg-slate-700"></div>
-                
-                {/* エポックボタン */}
                 <div className="relative flex justify-between items-start overflow-x-auto pb-2">
-                  {epochs.map((epoch, index) => {
+                  {epochs.map((epoch) => {
                     const isSelected = selectedEpoch === epoch.id;
                     const isCurrent = epoch.id === 'current';
                     return (
@@ -166,22 +165,17 @@ export default function HomePage() {
                         className="flex flex-col items-center group flex-shrink-0 px-2"
                         style={{ minWidth: `${100 / epochs.length}%` }}
                       >
-                        {/* ドット */}
                         <div className={`w-4 h-4 rounded-full border-2 transition-all duration-200 mb-2 z-10 ${
                           isSelected
                             ? 'bg-blue-500 border-blue-400 shadow-lg shadow-blue-500/50 scale-125'
-                            : 'bg-slate-800 border-slate-600 group-hover:border-blue-500 group-hover:bg-slate-700'
+                            : 'bg-slate-800 border-slate-600 group-hover:border-blue-500'
                         }`}></div>
-                        
-                        {/* 年 */}
                         <span className={`text-xs font-bold mb-1 transition-colors ${
                           isSelected ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'
                         }`}>
                           {isCurrent ? '現在' : epoch.year}
                         </span>
-                        
-                        {/* タイトル */}
-                        <span className={`text-xs text-center leading-tight transition-colors max-w-16 ${
+                        <span className={`text-xs text-center leading-tight max-w-16 ${
                           isSelected ? 'text-white' : 'text-slate-600 group-hover:text-slate-400'
                         }`}>
                           {isCurrent ? '🌐' : epoch.title_ja.length > 8 ? epoch.title_ja.slice(0, 8) + '…' : epoch.title_ja}
@@ -195,72 +189,35 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 世界地図 */}
         <section className="mb-8">
-          <div className="bg-gray-900 rounded-2xl border border-slate-800 p-4 flex gap-4">
-            {/* 地図 */}
-            <div className="flex-1 h-[500px]">
-              <WorldMap 
+          <div className="bg-gray-900 rounded-2xl border border-slate-800 p-4">
+            <div className="h-[500px]">
+              <WorldMap
                 relations={relations}
                 countries={countries}
                 onCountrySelect={setSelectedCountry}
+                selectedCountryId={selectedCountry}
               />
             </div>
-
-            {/* サイドパネル */}
-            <div className="w-64 flex flex-col bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex-shrink-0">
-              <div className="p-3 border-b border-slate-700 flex items-center justify-between">
-                {selectedCountry ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{countries.find(c => c.id === selectedCountry)?.flag_emoji}</span>
-                      <span className="font-semibold text-white text-sm">{countries.find(c => c.id === selectedCountry)?.name_ja}</span>
+            {selectedCountry && (
+              <div className="mt-4 p-4 bg-slate-800 rounded-xl border border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">{countries.find(c => c.id === selectedCountry)?.flag_emoji}</span>
+                    <div>
+                      <h3 className="font-semibold text-white">{countries.find(c => c.id === selectedCountry)?.name_ja}</h3>
+                      <p className="text-sm text-slate-400">クリックした国の関係が表示されています</p>
                     </div>
-                    <button onClick={() => setSelectedCountry(null)} className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded hover:bg-slate-700">✕</button>
-                  </>
-                ) : (
-                  <span className="text-slate-400 text-sm">国をクリックしてください</span>
-                )}
+                  </div>
+                  <button onClick={() => setSelectedCountry(null)} className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700 transition-colors">
+                    ✕ 解除
+                  </button>
+                </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                {selectedCountry ? (
-                  relations
-                    .filter(r => r.country_a === selectedCountry || r.country_b === selectedCountry)
-                    .map(rel => {
-                      const otherId = rel.country_a === selectedCountry ? rel.country_b : rel.country_a;
-                      const other = countries.find(c => c.id === otherId);
-                      const statusColors: Record<string, string> = {
-                        hostile: 'text-red-400 bg-red-400/10',
-                        tension: 'text-orange-400 bg-orange-400/10',
-                        friendly: 'text-green-400 bg-green-400/10',
-                        alliance: 'text-blue-400 bg-blue-400/10',
-                      };
-                      const statusLabels: Record<string, string> = {
-                        hostile: '敵対', tension: '対立', friendly: '友好', alliance: '同盟'
-                      };
-                      if (!other) return null;
-                      return (
-                        <div key={rel.id} className="border-b border-slate-700 pb-3 last:border-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-base">{other.flag_emoji}</span>
-                            <span className="text-white text-xs font-medium">{other.name_ja}</span>
-                            <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${statusColors[rel.status]}`}>
-                              {statusLabels[rel.status]}
-                            </span>
-                          </div>
-                          <p className="text-slate-400 text-xs leading-relaxed">{rel.summary_ja}</p>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <p className="text-slate-500 text-xs text-center mt-8">地図上の国をクリックすると<br/>関係一覧が表示されます</p>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
-        {/* 最新記事 */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">最新の政治情勢ニュース</h2>
@@ -278,17 +235,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-slate-500 text-sm">
             <p>世界政治情勢マップ © 2024</p>
-            <p className="mt-2">データは随時更新されています</p>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
-
-
-
-
-
-
