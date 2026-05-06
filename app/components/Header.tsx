@@ -88,3 +88,4 @@ export default function Header({ currentPage = 'home', countries = [], onCountry
     </header>
   );
 }
+
