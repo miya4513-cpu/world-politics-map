@@ -43,6 +43,7 @@ interface CountryRelation {
 interface Article {
   id: string;
   title_ja: string;
+  body_ja: string;
   source_name: string;
   source_url: string;
   published_at: string;
