@@ -116,7 +116,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <Header currentPage="home" />
+      <Header currentPage="home" countries={countries} onCountrySelect={setSelectedCountry} />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section className="text-center mb-8">
