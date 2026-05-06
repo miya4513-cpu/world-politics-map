@@ -99,6 +99,18 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
     }
   }, [selectedCountryId]);
 
+  useEffect(() => {
+    if (selectedCountryId !== undefined) {
+      updateColors(selectedCountryId ?? null);
+      if (selectedCountryId) {
+        setSelectedCountry(selectedCountryId);
+        const related = relations.filter(r => r.country_a === selectedCountryId || r.country_b === selectedCountryId);
+        setPopupData(related);
+        setPopupPos({ x: 300, y: 200 });
+      }
+    }
+  }, [selectedCountryId]);
+
   const updateColors = (selected: string | null) => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -219,6 +231,7 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
     </div>
   );
 }
+
 
 
 
