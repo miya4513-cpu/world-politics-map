@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
@@ -116,7 +116,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <Header currentPage="home" countries={countries} onCountrySelect={setSelectedCountry} />
+      <Header currentPage="home" countries={countries} onCountrySelect={setSelectedCountry} selectedCountryId={selectedCountry} />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section className="text-center mb-8">
@@ -203,7 +203,7 @@ export default function HomePage() {
               <WorldMap 
                 relations={relations}
                 countries={countries}
-                onCountrySelect={setSelectedCountry}
+                onCountrySelect={setSelectedCountry} selectedCountryId={selectedCountry}
               />
             </div>
 
@@ -285,3 +285,4 @@ export default function HomePage() {
     </div>
   );
 }
+
