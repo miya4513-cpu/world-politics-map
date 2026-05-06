@@ -47,7 +47,7 @@ const RelationPopup: React.FC<RelationPopupProps> = ({
 
   return (
     <div
-      className="absolute bg-gray-900 border border-slate-700 rounded-xl shadow-2xl p-4 max-w-sm z-50 overflow-y-auto max-h-96" style={{ right: 16, top: 16, left: 'auto' }}
+      className="bg-gray-900 border border-slate-700 rounded-xl p-4 w-full overflow-y-auto max-h-64"
       style={{
   left: Math.min(position.x + 20, window.innerWidth - 370),
   top: Math.min(position.y + 20, window.innerHeight - 420),
@@ -109,5 +109,6 @@ const RelationPopup: React.FC<RelationPopupProps> = ({
 };
 
 export default RelationPopup;
+
 
 
