@@ -88,10 +88,22 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [popupData, setPopupData] = useState<CountryRelation[]>([]);
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null);
 
   // 選択状態が変わったら地図の色を更新
+  useEffect(() => {
+    if (!mapLoaded || selectedCountryId === undefined) return;
+    updateColors(selectedCountryId ?? null);
+    if (selectedCountryId) {
+      setSelectedCountry(selectedCountryId);
+      const related = relations.filter(r => r.country_a === selectedCountryId || r.country_b === selectedCountryId);
+      setPopupData(related);
+      setPopupPos({ x: 300, y: 200 });
+    }
+  }, [selectedCountryId, mapLoaded]);
+
   const updateColors = (selected: string | null) => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -184,6 +196,7 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
           (world.objects as Record<string, GeometryCollection>).countries
         );
         if (countries110m.type !== 'FeatureCollection') return;
+        setMapLoaded(true);
 
         g.selectAll('path.country')
           .data(countries110m.features)
@@ -272,3 +285,5 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
     </div>
   );
 }
+
+
