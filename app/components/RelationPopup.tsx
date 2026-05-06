@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { RELATION_STATUS } from '@/lib/constants';
@@ -109,3 +109,4 @@ const RelationPopup: React.FC<RelationPopupProps> = ({
 };
 
 export default RelationPopup;
+
