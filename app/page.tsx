@@ -71,6 +71,51 @@ const STATUS_COLORS: Record<string, string> = {
   alliance: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
 };
 
+const COUNTRY_GROUPS = [
+  {
+    id: 'eu',
+    label: 'EU',
+    emoji: '🇪🇺',
+    color: '#60a5fa',
+    members: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'],
+  },
+  {
+    id: 'nato',
+    label: 'NATO',
+    emoji: '🛡️',
+    color: '#34d399',
+    members: ['AL','BE','CA','HR','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IT','LV','LT','LU','ME','NL','MK','NO','PL','PT','RO','SK','SI','ES','TR','GB','US'],
+  },
+  {
+    id: 'asean',
+    label: 'ASEAN',
+    emoji: '🌏',
+    color: '#fbbf24',
+    members: ['BN','KH','ID','LA','MY','MM','PH','SG','TH','VN'],
+  },
+  {
+    id: 'g7',
+    label: 'G7',
+    emoji: '🏦',
+    color: '#f472b6',
+    members: ['CA','FR','DE','IT','JP','GB','US'],
+  },
+  {
+    id: 'brics',
+    label: 'BRICs',
+    emoji: '🌐',
+    color: '#fb923c',
+    members: ['BR','RU','IN','CN','ZA','ET','EG','IR','SA','AE'],
+  },
+  {
+    id: 'arab',
+    label: 'アラブ連盟',
+    emoji: '🕌',
+    color: '#a78bfa',
+    members: ['DZ','BH','KM','DJ','EG','IQ','JO','KW','LB','LY','MR','MA','OM','PS','QA','SA','SO','SD','SY','TN','AE','YE'],
+  },
+];
+
 export default function HomePage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [relations, setRelations] = useState<CountryRelation[]>([]);
@@ -79,6 +124,7 @@ export default function HomePage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [epochs, setEpochs] = useState<Epoch[]>([]);
   const [selectedEpoch, setSelectedEpoch] = useState<string>('current');
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -118,10 +164,21 @@ export default function HomePage() {
   async function handleEpochChange(epochId: string) {
     setSelectedEpoch(epochId);
     setSelectedCountry(null);
+    setSelectedGroup(null);
     await loadRelations(epochId);
   }
 
+  function handleGroupClick(groupId: string) {
+    if (selectedGroup === groupId) {
+      setSelectedGroup(null);
+    } else {
+      setSelectedGroup(groupId);
+      setSelectedCountry(null);
+    }
+  }
+
   const currentEpoch = epochs.find(e => e.id === selectedEpoch);
+  const activeGroup = COUNTRY_GROUPS.find(g => g.id === selectedGroup);
 
   if (loading) {
     return (
@@ -141,7 +198,7 @@ export default function HomePage() {
       <Header
         currentPage="home"
         countries={countries}
-        onCountrySelect={setSelectedCountry}
+        onCountrySelect={(id) => { setSelectedCountry(id); setSelectedGroup(null); }}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -209,19 +266,89 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 地図 + 関係一覧 */}
+        {/* 地図 + グループボタン + 関係一覧 */}
         <section className="mb-8">
+          {/* グループボタン */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {COUNTRY_GROUPS.map(group => {
+              const isActive = selectedGroup === group.id;
+              return (
+                <button
+                  key={group.id}
+                  onClick={() => handleGroupClick(group.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-200 ${
+                    isActive
+                      ? 'text-white border-transparent scale-105 shadow-lg'
+                      : 'text-slate-300 bg-slate-800 border-slate-600 hover:border-slate-400'
+                  }`}
+                  style={isActive ? { backgroundColor: group.color, borderColor: group.color, boxShadow: `0 0 12px ${group.color}60` } : {}}
+                >
+                  <span>{group.emoji}</span>
+                  <span>{group.label}</span>
+                  {isActive && <span className="text-xs opacity-80">({group.members.length}カ国)</span>}
+                </button>
+              );
+            })}
+            {selectedGroup && (
+              <button
+                onClick={() => setSelectedGroup(null)}
+                className="px-3 py-1.5 rounded-full text-xs text-slate-400 border border-slate-600 hover:text-white hover:border-slate-400 transition-all"
+              >
+                ✕ 解除
+              </button>
+            )}
+          </div>
+
           <div className="bg-gray-900 rounded-2xl border border-slate-800 p-4">
             <div className="h-[500px]">
               <WorldMap
                 relations={relations}
                 countries={countries}
-                onCountrySelect={setSelectedCountry}
+                onCountrySelect={(id) => { setSelectedCountry(id); setSelectedGroup(null); }}
                 selectedCountryId={selectedCountry}
+                highlightCountries={activeGroup ? activeGroup.members : null}
+                highlightColor={activeGroup ? activeGroup.color : undefined}
               />
             </div>
 
-            {/* 関係一覧 */}
+            {/* グループ情報バー */}
+            {selectedGroup && activeGroup && (
+              <div className="mt-4 rounded-xl border overflow-hidden" style={{ borderColor: `${activeGroup.color}40`, backgroundColor: `${activeGroup.color}10` }}>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{activeGroup.emoji}</span>
+                    <div>
+                      <h3 className="font-bold text-white">{activeGroup.label}</h3>
+                      <p className="text-xs text-slate-400">加盟国 {activeGroup.members.length}カ国</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedGroup(null)}
+                    className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700"
+                  >
+                    ✕ 解除
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 px-4 pb-4">
+                  {activeGroup.members.map(memberId => {
+                    const c = countries.find(x => x.id === memberId);
+                    if (!c) return null;
+                    return (
+                      <button
+                        key={memberId}
+                        onClick={() => { setSelectedCountry(memberId); setSelectedGroup(null); }}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-white transition-all"
+                      >
+                        <span>{c.flag_emoji}</span>
+                        <span>{c.name_ja}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 国選択の関係一覧 */}
             {selectedCountry && selectedCountryData && (
               <div className="mt-4 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
