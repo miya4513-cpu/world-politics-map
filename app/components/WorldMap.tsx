@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import { Topology, GeometryCollection } from 'topojson-specification';
+import RelationPopup from './RelationPopup';
 
 interface Country {
   id: string;
@@ -30,6 +31,7 @@ interface WorldMapProps {
   relations: CountryRelation[];
   countries: Country[];
   onCountrySelect: (countryId: string | null) => void;
+  selectedCountryId?: string | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -39,6 +41,7 @@ const STATUS_COLORS: Record<string, string> = {
   alliance: '#60a5fa',
 };
 
+// D3のnumericIdと国IDの対応（ISO numeric → ISO alpha-2）
 const NUMERIC_TO_ID: Record<string, string> = {
   '004': 'AF', '008': 'AL', '012': 'DZ', '020': 'AD', '024': 'AO',
   '028': 'AG', '032': 'AR', '051': 'AM', '036': 'AU', '040': 'AT',
@@ -88,86 +91,100 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
   const [popupData, setPopupData] = useState<CountryRelation[]>([]);
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null);
 
-  useEffect(() => {
-    if (selectedCountryId !== undefined) {
-      updateColors(selectedCountryId ?? null);
-      if (selectedCountryId) {
-        setSelectedCountry(selectedCountryId);
-        const related = relations.filter(r => r.country_a === selectedCountryId || r.country_b === selectedCountryId);
-        setPopupData(related);
-      }
-    }
-  }, [selectedCountryId]);
-
-  useEffect(() => {
-    if (selectedCountryId !== undefined) {
-      updateColors(selectedCountryId ?? null);
-      if (selectedCountryId) {
-        setSelectedCountry(selectedCountryId);
-        const related = relations.filter(r => r.country_a === selectedCountryId || r.country_b === selectedCountryId);
-        setPopupData(related);
-        setPopupPos({ x: 300, y: 200 });
-      }
-    }
-  }, [selectedCountryId]);
-
+  // 選択状態が変わったら地図の色を更新
   const updateColors = (selected: string | null) => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
+
     if (!selected) {
+      // 選択解除 → 全部デフォルト色
       svg.selectAll<SVGPathElement, { id?: string | number }>('path.country')
-        .attr('fill', 'url(#landGrad)').attr('opacity', 1).attr('filter', 'none');
+        .attr('fill', 'url(#landGrad)')
+        .attr('opacity', 1)
+        .attr('filter', 'none');
       return;
     }
+
+    // この国との関係マップを作成
     const relationMap: Record<string, string> = {};
     relations.forEach(rel => {
       if (rel.country_a === selected) relationMap[rel.country_b] = rel.status;
       if (rel.country_b === selected) relationMap[rel.country_a] = rel.status;
     });
+
     svg.selectAll<SVGPathElement, { id?: string | number }>('path.country')
       .each(function(d) {
         const numericId = String((d as { id?: string | number }).id).padStart(3, '0');
         const countryId = NUMERIC_TO_ID[numericId];
         const el = d3.select(this);
+
         if (countryId === selected) {
+          // 選択した国 → 白く光る
           el.attr('fill', '#e2e8f0').attr('opacity', 1).attr('filter', 'url(#glow)');
         } else if (countryId && relationMap[countryId]) {
-          el.attr('fill', STATUS_COLORS[relationMap[countryId]]).attr('opacity', 1).attr('filter', 'url(#glow)');
+          // 関係ある国 → ステータス色で光る
+          el.attr('fill', STATUS_COLORS[relationMap[countryId]])
+            .attr('opacity', 1)
+            .attr('filter', 'url(#glow)');
         } else {
-          el.attr('fill', 'url(#landGrad)').attr('opacity', 0.4).attr('filter', 'none');
+          // 関係ない国 → 暗く
+          el.attr('fill', '#1e293b').attr('opacity', 0.5).attr('filter', 'none');
         }
       });
   };
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
+
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
+
     const width = containerRef.current.clientWidth || 800;
     const height = containerRef.current.clientHeight || 500;
+
     const defs = svg.append('defs');
-    const bgGrad = defs.append('linearGradient').attr('id', 'bgGrad').attr('x1', '0%').attr('y1', '0%').attr('x2', '100%').attr('y2', '100%');
+
+    const bgGrad = defs.append('linearGradient')
+      .attr('id', 'bgGrad').attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '100%').attr('y2', '100%');
     bgGrad.append('stop').attr('offset', '0%').attr('stop-color', '#0f172a');
     bgGrad.append('stop').attr('offset', '100%').attr('stop-color', '#1e293b');
-    const landGrad = defs.append('linearGradient').attr('id', 'landGrad').attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
+
+    const landGrad = defs.append('linearGradient')
+      .attr('id', 'landGrad').attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '0%').attr('y2', '100%');
     landGrad.append('stop').attr('offset', '0%').attr('stop-color', '#334155');
     landGrad.append('stop').attr('offset', '100%').attr('stop-color', '#293548');
+
     const filter = defs.append('filter').attr('id', 'glow');
     filter.append('feGaussianBlur').attr('stdDeviation', '4').attr('result', 'coloredBlur');
     const feMerge = filter.append('feMerge');
     feMerge.append('feMergeNode').attr('in', 'coloredBlur');
     feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
     svg.append('rect').attr('width', width).attr('height', height).attr('fill', 'url(#bgGrad)');
-    const projection = d3.geoNaturalEarth1().scale(width / 6.5).translate([width / 2, height / 2.2])
+
+    const projection = d3.geoNaturalEarth1()
+      .scale(width / 6.5)
+      .translate([width / 2, height / 2]);
+
     const path = d3.geoPath().projection(projection);
     const g = svg.append('g');
-    const zoom = d3.zoom<SVGSVGElement, unknown>().scaleExtent([1, 8]).on('zoom', (event) => { g.attr('transform', event.transform); });
+
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => { g.attr('transform', event.transform); });
     svg.call(zoom);
+
     fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
       .then(res => res.json())
       .then((world: Topology) => {
-        const countries110m = topojson.feature(world, (world.objects as Record<string, GeometryCollection>).countries);
+        const countries110m = topojson.feature(
+          world,
+          (world.objects as Record<string, GeometryCollection>).countries
+        );
         if (countries110m.type !== 'FeatureCollection') return;
+
         g.selectAll('path.country')
           .data(countries110m.features)
           .enter()
@@ -196,11 +213,16 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
             const numericId = String((d as { id?: string | number }).id).padStart(3, '0');
             const countryId = NUMERIC_TO_ID[numericId];
             if (!countryId) return;
+
             setSelectedCountry(countryId);
             onCountrySelect(countryId);
             updateColors(countryId);
-            const related = relations.filter(r => r.country_a === countryId || r.country_b === countryId);
+
+            const related = relations.filter(
+              r => r.country_a === countryId || r.country_b === countryId
+            );
             setPopupData(related);
+
             const rect = containerRef.current!.getBoundingClientRect();
             setPopupPos({ x: event.clientX - rect.left, y: event.clientY - rect.top });
           });
@@ -210,6 +232,8 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
   return (
     <div ref={containerRef} className="relative w-full h-full rounded-xl overflow-hidden">
       <svg ref={svgRef} className="w-full h-full" />
+
+      {/* 凡例 */}
       <div className="absolute top-3 right-3 bg-black bg-opacity-60 backdrop-blur-sm rounded-lg px-3 py-2 text-xs space-y-1 border border-slate-700">
         {[
           { status: 'hostile', label: '敵対' },
@@ -223,19 +247,28 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
           </div>
         ))}
       </div>
+
+      {/* ヒント */}
       {!selectedCountry && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 backdrop-blur-sm text-slate-300 text-xs px-4 py-2 rounded-full border border-slate-600 pointer-events-none">
           🌍 国をクリックして関係を見る　|　スクロールでズーム
         </div>
       )}
+
+      {popupData.length > 0 && popupPos && (
+        <RelationPopup
+          relations={popupData}
+          countries={countries}
+          position={popupPos}
+          onClose={() => {
+            setPopupData([]);
+            setPopupPos(null);
+            setSelectedCountry(null);
+            onCountrySelect(null);
+            updateColors(null);
+          }}
+        />
+      )}
     </div>
   );
 }
-
-
-
-
-
-
-
-
