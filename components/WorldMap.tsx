@@ -206,20 +206,6 @@ export default function WorldMap({ relations, countries, onCountrySelect }: Worl
           🌍 国をクリックして関係を見る　|　スクロールでズーム
         </div>
       )}
-      {popupData.length > 0 && popupPos && (
-        <RelationPopup
-          relations={popupData}
-          countries={countries}
-          position={popupPos}
-          onClose={() => {
-            setPopupData([]);
-            setPopupPos(null);
-            setSelectedCountry(null);
-            onCountrySelect(null);
-            updateColors(null);
-          }}
-        />
-      )}
     </div>
   );
 }
