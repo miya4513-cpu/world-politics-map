@@ -58,6 +58,19 @@ interface Epoch {
   sort_order: number;
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  hostile: '敵対',
+  tension: '対立',
+  friendly: '友好',
+  alliance: '同盟',
+};
+const STATUS_COLORS: Record<string, string> = {
+  hostile: 'text-red-400 bg-red-500/10 border-red-500/30',
+  tension: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
+  friendly: 'text-green-400 bg-green-500/10 border-green-500/30',
+  alliance: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
+};
+
 export default function HomePage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [relations, setRelations] = useState<CountryRelation[]>([]);
@@ -118,6 +131,11 @@ export default function HomePage() {
     );
   }
 
+  const selectedCountryData = countries.find(c => c.id === selectedCountry);
+  const selectedRelations = relations.filter(
+    r => r.country_a === selectedCountry || r.country_b === selectedCountry
+  );
+
   return (
     <div className="min-h-screen bg-gray-950">
       <Header
@@ -134,6 +152,7 @@ export default function HomePage() {
           </p>
         </section>
 
+        {/* タイムライン */}
         <section className="mb-6">
           <div className="bg-gray-900 rounded-2xl border border-slate-800 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-800">
@@ -190,6 +209,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* 地図 + 関係一覧 */}
         <section className="mb-8">
           <div className="bg-gray-900 rounded-2xl border border-slate-800 p-4">
             <div className="h-[500px]">
@@ -200,7 +220,53 @@ export default function HomePage() {
                 selectedCountryId={selectedCountry}
               />
             </div>
-            
+
+            {/* 関係一覧 */}
+            {selectedCountry && selectedCountryData && (
+              <div className="mt-4 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{selectedCountryData.flag_emoji}</span>
+                    <div>
+                      <h3 className="font-bold text-white">{selectedCountryData.name_ja}</h3>
+                      <p className="text-xs text-slate-400">{selectedRelations.length}件の関係</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedCountry(null)}
+                    className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700"
+                  >
+                    ✕ 解除
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+                  {selectedRelations.map(rel => {
+                    const otherId = rel.country_a === selectedCountry ? rel.country_b : rel.country_a;
+                    const other = countries.find(c => c.id === otherId);
+                    return (
+                      <div key={rel.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span>{other?.flag_emoji}</span>
+                            <span className="text-white text-sm font-medium">{other?.name_ja}</span>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[rel.status]}`}>
+                            {STATUS_LABELS[rel.status]}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">{rel.summary_ja}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ニュース */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">最新の政治情勢ニュース</h2>
             <a href="/articles" className="text-blue-400 hover:text-blue-300 font-medium">すべて見る →</a>
           </div>
@@ -222,46 +288,3 @@ export default function HomePage() {
     </div>
   );
 }
-{selectedCountry && (() => {
-              const sel = countries.find(c => c.id === selectedCountry);
-              const rels = relations.filter(r => r.country_a === selectedCountry || r.country_b === selectedCountry);
-              const STATUS_LABELS: Record<string, string> = { hostile: '敵対', tension: '対立', friendly: '友好', alliance: '同盟' };
-              const STATUS_COLORS: Record<string, string> = { hostile: 'text-red-400 bg-red-500/10 border-red-500/30', tension: 'text-orange-400 bg-orange-500/10 border-orange-500/30', friendly: 'text-green-400 bg-green-500/10 border-green-500/30', alliance: 'text-blue-400 bg-blue-500/10 border-blue-500/30' };
-              return (
-                <div className="mt-4 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{sel?.flag_emoji}</span>
-                      <div>
-                        <h3 className="font-bold text-white">{sel?.name_ja}</h3>
-                        <p className="text-xs text-slate-400">{rels.length}件の関係</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setSelectedCountry(null)} className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700">✕ 解除</button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
-                    {rels.map(rel => {
-                      const otherId = rel.country_a === selectedCountry ? rel.country_b : rel.country_a;
-                      const other = countries.find(c => c.id === otherId);
-                      return (
-                        <div key={rel.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <span>{other?.flag_emoji}</span>
-                              <span className="text-white text-sm font-medium">{other?.name_ja}</span>
-                            </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[rel.status]}`}>{STATUS_LABELS[rel.status]}</span>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-1">{rel.summary_ja}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </section>
-
-        <section>
-          <div className="flex items-center justify-between mb-6">
