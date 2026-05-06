@@ -117,6 +117,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <Header currentPage="home" countries={countries} onCountrySelect={setSelectedCountry}
+                selectedCountryId={selectedCountry}
                 selectedCountryId={selectedCountry} />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -205,6 +206,7 @@ export default function HomePage() {
                 relations={relations}
                 countries={countries}
                 onCountrySelect={setSelectedCountry}
+                selectedCountryId={selectedCountry}
                 selectedCountryId={selectedCountry} selectedCountryId={selectedCountry}
               />
             </div>
@@ -287,6 +289,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
