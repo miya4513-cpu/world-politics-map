@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
@@ -81,12 +81,23 @@ const NUMERIC_TO_ID: Record<string, string> = {
   '704': 'VN', '887': 'YE', '894': 'ZM', '716': 'ZW',
 };
 
-export default function WorldMap({ relations, countries, onCountrySelect }: WorldMapProps) {
+export default function WorldMap({ relations, countries, onCountrySelect, selectedCountryId }: WorldMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [popupData, setPopupData] = useState<CountryRelation[]>([]);
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (selectedCountryId !== undefined) {
+      updateColors(selectedCountryId ?? null);
+      if (selectedCountryId) {
+        setSelectedCountry(selectedCountryId);
+        const related = relations.filter(r => r.country_a === selectedCountryId || r.country_b === selectedCountryId);
+        setPopupData(related);
+      }
+    }
+  }, [selectedCountryId]);
 
   const updateColors = (selected: string | null) => {
     if (!svgRef.current) return;
@@ -208,5 +219,7 @@ export default function WorldMap({ relations, countries, onCountrySelect }: Worl
     </div>
   );
 }
+
+
 
 
