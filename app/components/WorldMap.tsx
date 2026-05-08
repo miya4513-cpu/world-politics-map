@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
@@ -13,12 +13,12 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const selectedCountryIdRef = useRef(selectedCountryId);
+  useEffect(() => { selectedCountryIdRef.current = selectedCountryId; }, [selectedCountryId]);
 
   const updateColors = (selected: string | null, highlight: string[] | null | undefined, hColor: string | undefined) => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
-
-    // グループハイライトモード
     if (!selected && highlight && highlight.length > 0) {
       const color = hColor || '#a78bfa';
       svg.selectAll<SVGPathElement, {id?:string|number}>('path.country').each(function(d) {
@@ -33,8 +33,6 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
       });
       return;
     }
-
-    // 国選択モード
     if (!selected) {
       svg.selectAll<SVGPathElement, {id?:string|number}>('path.country').attr('fill','url(#landGrad)').attr('opacity',1).attr('filter','none');
       return;
@@ -85,8 +83,20 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
       if (countries110m.type !== 'FeatureCollection') return;
       g.selectAll('path.country').data(countries110m.features).enter().append('path')
         .attr('class','country').attr('d',path as never).attr('fill','url(#landGrad)').attr('stroke','#475569').attr('stroke-width',0.3).attr('cursor','pointer')
-        .on('mouseover',function(_,d){const nid=String((d as {id?:string|number}).id).padStart(3,'0');const cid=NUMERIC_TO_ID[nid];if(!selectedCountryId&&cid){d3.select(this).attr('fill','#3b82f6').attr('filter','url(#glow)');}})
-        .on('mouseout',function(_,d){const nid=String((d as {id?:string|number}).id).padStart(3,'0');const cid=NUMERIC_TO_ID[nid];if(!selectedCountryId&&cid){d3.select(this).attr('fill','url(#landGrad)').attr('filter','none');}})
+        .on('mouseover',function(_,d){
+          const nid=String((d as {id?:string|number}).id).padStart(3,'0');
+          const cid=NUMERIC_TO_ID[nid];
+          if(!selectedCountryIdRef.current && cid){
+            d3.select(this).attr('fill','#3b82f6').attr('filter','url(#glow)');
+          }
+        })
+        .on('mouseout',function(_,d){
+          const nid=String((d as {id?:string|number}).id).padStart(3,'0');
+          const cid=NUMERIC_TO_ID[nid];
+          if(!selectedCountryIdRef.current && cid){
+            d3.select(this).attr('fill','url(#landGrad)').attr('filter','none');
+          }
+        })
         .on('click',function(_,d){const nid=String((d as {id?:string|number}).id).padStart(3,'0');const cid=NUMERIC_TO_ID[nid];if(!cid)return;onCountrySelect(cid);});
       setMapLoaded(true);
     });
