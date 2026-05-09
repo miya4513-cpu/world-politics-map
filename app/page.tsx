@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { getCountries, getPublishedArticles } from '@/lib/supabase';
-import { useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import ArticleCard from '@/components/ArticleCard';
 import Header from '@/components/Header';
@@ -133,11 +132,6 @@ export default function HomePage() {
   const [epochs, setEpochs] = useState<Epoch[]>([]);
   const [selectedEpoch, setSelectedEpoch] = useState<string>('current');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    const country = searchParams.get('country');
-    if (country) setSelectedCountry(country);
-  }, [searchParams]);
 
   useEffect(() => {
     async function loadData() {
@@ -436,3 +430,4 @@ export default function HomePage() {
 
 
  
+
