@@ -141,7 +141,7 @@ export default function CountryPage() {
             <span>←</span>
             <span className="text-sm">地図に戻る</span>
           </Link>
-          <span className="text-slate-500 text-sm">🗺️ 世界政治情勢マップ</span>
+          <a href={`/?country=${countryId}`} className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors">🗺️ 地図で見る</a>
         </div>
       </header>
 
