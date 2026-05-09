@@ -148,7 +148,7 @@ export default function CountryPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-gray-900 rounded-2xl border border-slate-800 p-8 mb-6">
           <div className="flex items-start gap-6">
-            <span className="text-7xl">{getFlagEmoji(country.id)}</span>
+            <img src={`https://flagcdn.com/48x36/${country.id.toLowerCase()}.png`} alt={country.name_ja} className="w-24 h-18 object-cover rounded-lg" />
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h1 className="text-4xl font-bold text-white">{country.name_ja}</h1>
@@ -252,7 +252,7 @@ export default function CountryPage() {
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-xl">{getFlagEmoji(otherId)}</span>
+                                <img src={`https://flagcdn.com/24x18/${otherId.toLowerCase()}.png`} alt={otherId} className="w-6 h-4 object-cover rounded-sm inline-block" />
                                 <span className="text-white font-medium">{other?.name_ja}</span>
                               </div>
                               <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[status].text} ${STATUS_COLORS[status].border}`}>
