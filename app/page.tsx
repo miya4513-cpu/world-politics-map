@@ -367,10 +367,7 @@ export default function HomePage() {
                       <a href={`/countries/${selectedCountry}`} className="text-blue-400 hover:text-blue-300 text-xs underline">詳細ページを見る →</a>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <a href={`/countries/${selectedCountry}`} className="text-blue-400 hover:text-blue-300 text-sm px-3 py-1 rounded-lg hover:bg-slate-700 border border-blue-500/30 transition-colors">詳細を見る →</a>
-                    <button onClick={() => setSelectedCountry(null)} className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700">✕ 解除</button>
-                  </div>
+                  <button onClick={() => setSelectedCountry(null)} className="text-slate-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-slate-700">✕ 解除</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
                   {selectedRelations.map(rel => {
@@ -430,4 +427,5 @@ export default function HomePage() {
 
 
  
+
 
