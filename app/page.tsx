@@ -360,7 +360,7 @@ export default function HomePage() {
               <div className="mt-4 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{getFlagEmoji(selectedCountryData.id)}</span>
+                    <img src={`https://flagcdn.com/32x24/${selectedCountryData.id.toLowerCase()}.png`} alt={selectedCountryData.name_ja} className="w-8 h-6 object-cover rounded-sm" />
                     <div>
                       <h3 className="font-bold text-white">{selectedCountryData.name_ja}</h3>
                       <p className="text-xs text-slate-400">{selectedRelations.length}件の関係</p>
@@ -422,6 +422,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
