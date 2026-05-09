@@ -389,7 +389,7 @@ export default function HomePage() {
                           </span>
                         </div>
                         <p className="text-xs text-slate-400 mt-1">{rel.summary_ja}</p>
-                      </div>
+                      </a>
                     );
                   })}
                 </div>
@@ -422,6 +422,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
