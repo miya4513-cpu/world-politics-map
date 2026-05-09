@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -94,7 +94,10 @@ export default function ArticlesPage() {
                   {related.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-auto mb-2">
                       {related.slice(0, 3).map(c => (
-                        <span key={c.id} className="text-xs text-slate-400">{c.flag_emoji} {c.name_ja}</span>
+                        <a key={c.id} href={`/countries/${c.id}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded-full transition-colors border border-slate-700">
+                            <img src={`https://flagcdn.com/16x12/${c.id.toLowerCase()}.png`} alt={c.name_ja} className="w-4 h-3 object-cover rounded-sm" />
+                            {c.name_ja}
+                          </a>
                       ))}
                     </div>
                   )}
@@ -110,3 +113,4 @@ export default function ArticlesPage() {
     </div>
   );
 }
+
