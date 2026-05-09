@@ -1,9 +1,15 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+
+function getFlagEmoji(countryCode: string): string {
+  if (!countryCode || countryCode.length !== 2) return '?';
+  const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -142,7 +148,7 @@ export default function CountryPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-gray-900 rounded-2xl border border-slate-800 p-8 mb-6">
           <div className="flex items-start gap-6">
-            <span className="text-7xl">{country.flag_emoji}</span>
+            <span className="text-7xl">{getFlagEmoji(country.id)}</span>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h1 className="text-4xl font-bold text-white">{country.name_ja}</h1>
@@ -246,7 +252,7 @@ export default function CountryPage() {
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-xl">{other?.flag_emoji}</span>
+                                <span className="text-xl">{getFlagEmoji(otherId)}</span>
                                 <span className="text-white font-medium">{other?.name_ja}</span>
                               </div>
                               <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[status].text} ${STATUS_COLORS[status].border}`}>
