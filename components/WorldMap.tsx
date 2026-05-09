@@ -13,6 +13,7 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [hoveredCountry, setHoveredCountry] = useState<{id: string; name: string; x: number; y: number} | null>(null);
   const selectedCountryIdRef = useRef(selectedCountryId);
   useEffect(() => { selectedCountryIdRef.current = selectedCountryId; }, [selectedCountryId]);
 
@@ -83,11 +84,18 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
       if (countries110m.type !== 'FeatureCollection') return;
       g.selectAll('path.country').data(countries110m.features).enter().append('path')
         .attr('class','country').attr('d',path as never).attr('fill','url(#landGrad)').attr('stroke','#475569').attr('stroke-width',0.3).attr('cursor','pointer')
-        .on('mouseover',function(_,d){
+        .on('mouseover',function(event,d){
           const nid=String((d as {id?:string|number}).id).padStart(3,'0');
           const cid=NUMERIC_TO_ID[nid];
-          if(!selectedCountryIdRef.current && cid){
-            d3.select(this).attr('fill','#3b82f6').attr('filter','url(#glow)');
+          if(cid){
+            if(!selectedCountryIdRef.current){
+              d3.select(this).attr('fill','#3b82f6').attr('filter','url(#glow)');
+            }
+            const rect = containerRef.current?.getBoundingClientRect();
+            const x = event.clientX - (rect?.left || 0);
+            const y = event.clientY - (rect?.top || 0);
+            const countryName = countries.find(c => c.id === cid)?.name_ja || cid;
+            setHoveredCountry({id: cid, name: countryName, x, y});
           }
         })
         .on('mouseout',function(_,d){
@@ -96,6 +104,7 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
           if(!selectedCountryIdRef.current && cid){
             d3.select(this).attr('fill','url(#landGrad)').attr('filter','none');
           }
+          setHoveredCountry(null);
         })
         .on('click',function(_,d){const nid=String((d as {id?:string|number}).id).padStart(3,'0');const cid=NUMERIC_TO_ID[nid];if(!cid)return;onCountrySelect(cid);});
       setMapLoaded(true);
@@ -113,6 +122,14 @@ export default function WorldMap({ relations, countries, onCountrySelect, select
           </div>
         ))}
       </div>
+      {hoveredCountry && (
+        <div
+          className="absolute z-10 bg-gray-900 border border-slate-600 text-white text-xs px-3 py-1.5 rounded-lg pointer-events-none shadow-lg"
+          style={{ left: hoveredCountry.x + 12, top: hoveredCountry.y - 10 }}
+        >
+          {hoveredCountry.name}
+        </div>
+      )}
       {!selectedCountryId && !highlightCountries && (<div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 backdrop-blur-sm text-slate-300 text-xs px-4 py-2 rounded-full border border-slate-600 pointer-events-none">🌍 国をクリックして関係を見る　|　スクロールでズーム</div>)}
     </div>
   );
