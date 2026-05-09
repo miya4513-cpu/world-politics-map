@@ -346,7 +346,7 @@ export default function HomePage() {
                         onClick={() => { setSelectedCountry(memberId); setSelectedGroup(null); }}
                         className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-white transition-all"
                       >
-                        <span>{c.flag_emoji}</span>
+                        <img src={`https://flagcdn.com/24x18/${c.id.toLowerCase()}.png`} alt={c.name_ja} className="w-6 h-4 object-cover rounded-sm inline-block" />
                         <span>{c.name_ja}</span>
                       </button>
                     );
@@ -381,7 +381,7 @@ export default function HomePage() {
                       <div key={rel.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span>{getFlagEmoji(otherId)}</span>
+                            <img src={`https://flagcdn.com/24x18/${otherId.toLowerCase()}.png`} alt={otherId} className="w-6 h-4 object-cover rounded-sm inline-block" />
                             <span className="text-white text-sm font-medium">{other?.name_ja}</span>
                           </div>
                           <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[rel.status]}`}>
@@ -422,4 +422,6 @@ export default function HomePage() {
     </div>
   );
 }
+
+
 
