@@ -370,6 +370,7 @@ export default function HomePage() {
                     <div>
                       <h3 className="font-bold text-white">{selectedCountryData.name_ja}</h3>
                       <p className="text-xs text-slate-400">{selectedRelations.length}件の関係</p>
+                      <a href={`/countries/${selectedCountry}`} className="text-blue-400 hover:text-blue-300 text-xs underline">詳細ページを見る →</a>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
