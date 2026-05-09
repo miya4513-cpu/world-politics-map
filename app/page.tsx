@@ -378,7 +378,7 @@ export default function HomePage() {
                     const otherId = rel.country_a === selectedCountry ? rel.country_b : rel.country_a;
                     const other = countries.find(c => c.id === otherId);
                     return (
-                      <div key={rel.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
+                      <a key={rel.id} href={`/countries/${otherId}`} className="bg-slate-900 rounded-lg p-3 border border-slate-700 block hover:border-slate-500 hover:bg-slate-800 transition-all">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
                             <img src={`https://flagcdn.com/24x18/${otherId.toLowerCase()}.png`} alt={otherId} className="w-6 h-4 object-cover rounded-sm inline-block" />
@@ -422,6 +422,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
