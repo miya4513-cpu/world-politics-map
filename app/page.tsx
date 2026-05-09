@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -56,6 +56,13 @@ interface Epoch {
   title_ja: string;
   description_ja: string;
   sort_order: number;
+}
+
+
+function getFlagEmoji(countryCode: string): string {
+  if (!countryCode || countryCode.length !== 2) return '';
+  const codePoints = countryCode.toUpperCase().split('').map((char: string) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -353,7 +360,7 @@ export default function HomePage() {
               <div className="mt-4 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{selectedCountryData.flag_emoji}</span>
+                    <span className="text-2xl">{getFlagEmoji(selectedCountryData.id)}</span>
                     <div>
                       <h3 className="font-bold text-white">{selectedCountryData.name_ja}</h3>
                       <p className="text-xs text-slate-400">{selectedRelations.length}件の関係</p>
@@ -374,7 +381,7 @@ export default function HomePage() {
                       <div key={rel.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span>{other?.flag_emoji}</span>
+                            <span>{getFlagEmoji(otherId)}</span>
                             <span className="text-white text-sm font-medium">{other?.name_ja}</span>
                           </div>
                           <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[rel.status]}`}>
@@ -415,3 +422,4 @@ export default function HomePage() {
     </div>
   );
 }
+
